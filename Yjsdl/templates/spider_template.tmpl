@@ -1,0 +1,29 @@
+# -*- coding: utf-8 -*-
+# @Time    : {DATE}
+# @Author  : {USER}
+# @File    : ${file_name}.py
+
+from Yjsdl import Spider
+
+
+class ${spider_name}(Spider):
+    request_config = {
+        "RETRIES": 3,
+        "DELAY": 0,
+        "TIMEOUT": 20
+    }
+    # 并发
+    concurrency = 2
+
+    async def start_requests(self):
+        yield self.request(
+            url='www.bai.com'
+        )
+
+    async def parse(self, response):
+        html = await response.text()
+        print(html)
+
+
+if __name__ == '__main__':
+    ${spider_name}.start()
