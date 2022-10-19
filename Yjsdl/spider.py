@@ -20,7 +20,8 @@ from Yjsdl.exceptions import (
     NotImplementedParseError,
     SpiderHookError,
 )
-from Yjsdl import item
+from Yjsdl.item import Item
+from Yjsdl.field import CsvFile
 from Yjsdl.middleware import Middleware
 from Yjsdl.request import Request
 from Yjsdl.response import Response
@@ -206,9 +207,9 @@ class Spider(SpiderHook):
                             aws_callback=callback_result, response=response
                         )
                     )
-                elif isinstance(callback_result, item.CsvItem):
+                elif isinstance(callback_result, Item):
                     # Process target item
-                    await self.process_item(callback_result)
+                    await self._process_item(callback_result)
                 else:
                     await self.process_callback_result(callback_result=callback_result)
         except NothingMatchedError as e:
@@ -216,6 +217,10 @@ class Spider(SpiderHook):
             self.logger.exception(error_info)
         except Exception as e:
             self.logger.exception(e)
+
+    async def _process_item(self, item):
+        name = item.name
+        pass
 
     async def _process_response(self, request: Request, response: Response):
         if response:

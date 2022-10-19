@@ -34,10 +34,8 @@ def foo(n):
 bb = 2
 
 g = foo(bb)
-for i in range(bb):
-    print(g)
+
+import Yjsdl.field as f
 
 
-# print(next(g))
-# print('two')
-# print(next(g))
+
