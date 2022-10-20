@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from Yjsdl import Spider, item
-from Yjsdl import Request
-from middlewares import middleware
+from Yjsdl.utils.UserAgent import middleware
+# from middlewares import middleware
 
 
 
