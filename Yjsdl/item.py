@@ -210,7 +210,7 @@ class CsvItem(MyArray, Item):
     def __init__(
             self, data_storage=None, mode=None, filename=None, file_header=None, encoding=None,
             initlist=None, **kwargs
-                ):
+    ):
         super().__init__(initlist=initlist, **kwargs)
         self.data_storage = data_storage
         self.filename = str(filename)
@@ -244,4 +244,3 @@ class CsvItem(MyArray, Item):
         self.mode = mode or self.mode
         self.encoding = encoding or self.encoding
         self.file_header = file_header or self[0].keys() if len(self) else []
-

@@ -26,6 +26,7 @@ from Yjsdl.middleware import Middleware
 from Yjsdl.request import Request
 from Yjsdl.response import Response
 from Yjsdl.utils import get_logger
+from Yjsdl.utils.UserAgent import request_ua
 
 if (
         sys.version_info[0] == 3
@@ -284,6 +285,8 @@ class Spider(SpiderHook):
 
         # Actually run crawling
         try:
+            # 基本middleware
+            self.middleware.request_middleware.append(request_ua)
             await self.start_master()
         finally:
             # Run hook after spider finished crawling

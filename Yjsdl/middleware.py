@@ -3,7 +3,6 @@
 from collections import deque
 from functools import wraps
 
-
 class Middleware:
     """
     Define a middleware to customize the crawler request or response

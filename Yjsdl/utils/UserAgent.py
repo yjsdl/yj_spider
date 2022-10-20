@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import random
-from Yjsdl import Middleware, Request
-middleware = Middleware()
 
 
 def fake_useragent():
@@ -268,8 +266,7 @@ def fake_useragent():
     return chrome + firefox + opera + ie + safari
 
 
-@middleware.request
-async def request_ua(spider_ins, request: Request):
+async def request_ua(spider_ins, request):
     ua = [
              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36',
              'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:84.0) Gecko/20100101 Firefox/84.0',

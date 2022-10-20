@@ -26,16 +26,28 @@ motor_uri = "mongodb://{account}{host}:{port}/{database}".format(
 
 
 
-def foo(n):
-    print('start')
-    for i in range(n):
-        yield i
-
-bb = 2
-
-g = foo(bb)
+# def foo(n):
+#     print('start')
+#     for i in range(n):
+#         yield i
+#
+# bb = 2
+#
+# g = foo(bb)
 
 import Yjsdl.field as f
 
 
 
+class Test:
+    def __init__(self):
+        self.data = []
+
+    def test1(self):
+        a = '1'
+
+    def test2(self):
+        b = '2'
+c = Test()
+
+print(c)
