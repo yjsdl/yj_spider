@@ -1,11 +1,10 @@
 #!/usr/bin/env python
+import os
 
-import re
-
-from typing import Union
-
-from lxml import etree
-
+import aiofiles
+import csv
+from aiocsv import AsyncDictWriter
+from Yjsdl.item import CsvItem
 from Yjsdl.exceptions import NothingMatchedError
 
 
@@ -14,7 +13,7 @@ class BaseField(object):
     BaseField class
     """
 
-    def __init__(self, default="", many: bool = False):
+    def __init__(self, default=""):
         """
         Init BaseField class
         url: http://lxml.de/index.html
@@ -22,23 +21,30 @@ class BaseField(object):
         :param many: if there are many fields in one page
         """
         self.default = default
-        self.many = many
 
     def extract(self, *args, **kwargs):
         raise NotImplementedError("Extract is not implemented.")
 
 
 class CsvFile:
-    name = 'csv file'
 
+    def __init__(self):
+        # self.column_index = dict()
+        self.writer = False
 
-    def __init__(self, ):
-        pass
-    # async def CsvFile(cls, filename: list = None, data: list = None):
-    #     async with aiofiles.open("new_file2.csv", mode="w", encoding="utf-8", newline="") as afp:
-    #         if filename is None:
-    #             raise ValueError('please input file headers')
-    #         writer = AsyncDictWriter(afp, filename, restval="NULL", quoting=csv.QUOTE_ALL)
-    #         await writer.writeheader()
-    #         await writer.writerows(data)
+    async def process_item(self, item: CsvItem):
+        filename = item.filename
+        file_path = item.data_storage
+        file = f"{filename}.{item.filetype}"
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+        mode = item.mode
+        file_header = item.file_header
+        is_header = item.is_header
 
+        async with aiofiles.open(file_path + '/' + file, mode=mode, encoding="utf-8", newline="") as afp:
+            self.writer = AsyncDictWriter(afp, file_header, restval="NULL", quoting=csv.QUOTE_ALL)
+
+            if not is_header:
+                await self.writer.writeheader()
+            await self.writer.writerows(item)

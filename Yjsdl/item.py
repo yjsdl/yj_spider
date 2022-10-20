@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 from collections import UserList
+import os
 from inspect import isawaitable
 from typing import Any
 from lxml import etree
-
+from aiocsv import AsyncDictWriter
+import csv
+import aiofiles
 from Yjsdl.exceptions import IgnoreThisItem, InvalidFuncType
-from Yjsdl.field import BaseField
+from Yjsdl import field
 from Yjsdl.request import Request
 
 
@@ -19,7 +22,7 @@ class ItemMeta(type):
             {
                 (field_name, attrs.pop(field_name))
                 for field_name, object in list(attrs.items())
-                if isinstance(object, BaseField)
+                if isinstance(object, field.BaseField)
             }
         )
         attrs["__fields"] = __fields
@@ -195,18 +198,19 @@ class MyArray(UserList):
 
 
 class CsvItem(MyArray, Item):
-    name = 'csvfile'
+    name = 'CsvFile'
     data_storage: str = None
     mode: str = "a"
     filetype: str = 'csv'
     filename: str = None
-    file_header = None
-    encoding: str = 'utf=-8'
+    __file_header = None
+    is_header = False
+    encoding: str = 'utf-8'
 
     def __init__(
             self, data_storage=None, mode=None, filename=None, file_header=None, encoding=None,
             initlist=None, **kwargs
-    ):
+                ):
         super().__init__(initlist=initlist, **kwargs)
         self.data_storage = data_storage
         self.filename = str(filename)
@@ -214,18 +218,20 @@ class CsvItem(MyArray, Item):
             self.mode = mode
         if encoding:
             self.encoding = encoding
-        self.file_header = file_header or (self[0].keys() if len(self) else None)
+        if os.path.exists(self.data_storage + '/' + f"{self.filename}.{self.filetype}"):
+            self.is_header = True
+        self.__file_header = file_header or (self[0].keys() if len(self) else None)
 
     @property
-    def fieldnames(self):
-        if self.file_header is None:
-            self.file_header = self[0].keys() if len(self) else []
-        return self.file_header
+    def file_header(self):
+        if self.__file_header is None:
+            self.__file_header = self[0].keys() if len(self) else []
+        return self.__file_header
 
-    @fieldnames.setter
-    def fieldnames(self, val):
-        if self.file_header != val:
-            self.file_header = val
+    @file_header.setter
+    def file_header(self, val):
+        if self.__file_header != val:
+            self.__file_header = val
 
     def set_attribute(self,
                       data_storage=None,
@@ -238,13 +244,4 @@ class CsvItem(MyArray, Item):
         self.mode = mode or self.mode
         self.encoding = encoding or self.encoding
         self.file_header = file_header or self[0].keys() if len(self) else []
-    
-    
-    # @classmethod
-    # async def process_item(cls, filename: list = None, data: list = None):
-    #     async with aiofiles.open("new_file2.csv", mode="w", encoding="utf-8", newline="") as afp:
-    #         if filename is None:
-    #             raise ValueError('please input file headers')
-    #         writer = AsyncDictWriter(afp, filename, restval="NULL", quoting=csv.QUOTE_ALL)
-    #         await writer.writeheader()
-    #         await writer.writerows(data)
+

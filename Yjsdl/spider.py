@@ -21,7 +21,7 @@ from Yjsdl.exceptions import (
     SpiderHookError,
 )
 from Yjsdl.item import Item
-from Yjsdl.field import CsvFile
+from Yjsdl import field
 from Yjsdl.middleware import Middleware
 from Yjsdl.request import Request
 from Yjsdl.response import Response
@@ -219,8 +219,9 @@ class Spider(SpiderHook):
             self.logger.exception(e)
 
     async def _process_item(self, item):
-        name = item.name
-        pass
+        func = item.__class__.name
+        if func == "CsvFile":
+            await field.CsvFile().process_item(item)
 
     async def _process_response(self, request: Request, response: Response):
         if response:
