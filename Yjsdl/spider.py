@@ -27,6 +27,7 @@ from Yjsdl.middleware import Middleware
 from Yjsdl.request import Request
 from Yjsdl.response import Response
 from Yjsdl.utils import get_logger
+from Yjsdl.handler import DownloadHandler
 from Yjsdl.utils.UserAgent import request_ua
 
 if (
@@ -173,7 +174,6 @@ class Spider(SpiderHook):
             raise ValueError(
                 "Your subject should have start_urls or async function example: start_urls = ['www.baidu.com'] ")
 
-
         self.loop = loop
         asyncio.set_event_loop(self.loop)
 
@@ -185,7 +185,6 @@ class Spider(SpiderHook):
         self.aiohttp_kwargs = self.aiohttp_kwargs or {}
         self.spider_kwargs = spider_kwargs
         self.request_config = self.request_config or {}
-        self.request_session = ClientSession()
 
         self.cancel_tasks = cancel_tasks
         self.is_async_start = is_async_start
@@ -204,14 +203,13 @@ class Spider(SpiderHook):
 
         # semaphore, used for concurrency control
 
-
-
     async def _process_async_callback(
             self, callback_result, response: Response = None
     ):
         try:
             if isinstance(callback_result, AsyncGenerator):
-                await self._process_async_callback(callback_result)
+                async for result in callback_result:
+                    self.request_queue.put_nowait(result)
             elif isinstance(callback_result, Request):
                 self.request_queue.put_nowait(callback_result)
             elif isinstance(callback_result, Coroutine):
@@ -253,6 +251,15 @@ class Spider(SpiderHook):
                 callback_result, response
             )
 
+    async def process_failed_response(self, request: Request, response: Response):
+        """
+        deal fail request
+        :param request:
+        :param response:
+        :return:
+        """
+        if isinstance(response, Request):
+            self.request_queue.put_nowait(response)
 
 
     async def _run_request_middleware(self, request: Request):
@@ -308,13 +315,12 @@ class Spider(SpiderHook):
             # 基本middleware
             self.middleware.request_middleware.append(request_ua)
             # 初始化请求
-            _start_requests = await self.start_master()
+            await self.start_master()
 
             await self.start_worker()
         finally:
             # Run hook after spider finished crawling
             await self._run_spider_hook(before_stop)
-            await self.request_session.close()
             # Display logs about this crawl task
             end_time = datetime.now()
             self.logger.info(
@@ -393,7 +399,7 @@ class Spider(SpiderHook):
     # 从此开始
     async def handle_request(
             self, request: Request, sem):
-    # ) -> typing.Tuple[AsyncGeneratorType, Response]:
+        # ) -> typing.Tuple[AsyncGeneratorType, Response]:
         """
         Wrap request with middleware.
         :param request:
@@ -405,7 +411,7 @@ class Spider(SpiderHook):
             await self._run_request_middleware(request)
             # 发送请求，调用回调函数
             # callback_result, response = await request.fetch_callback()
-            response = await request.fetch()
+            response = await DownloadHandler().fetch(request)
             sem.release()
             # 响应后中间件
             await self._run_response_middleware(request, response)
@@ -420,7 +426,6 @@ class Spider(SpiderHook):
             self.logger.exception(error_info)
         except Exception as e:
             self.logger.exception(f"<Callback[{request.callback.__name__}]: {e}")
-
 
     async def start_requests(self):
         """
@@ -469,7 +474,6 @@ class Spider(SpiderHook):
         meta = meta or {}
         callback = callback or self.parse
         request_config = request_config or {}
-        request_session = request_session or self.request_session
 
         request_config.update(self.request_config.copy())
         aiohttp_kwargs.update(self.aiohttp_kwargs.copy())
@@ -485,7 +489,6 @@ class Spider(SpiderHook):
             headers=headers,
             meta=meta,
             request_config=request_config,
-            request_session=request_session,
             **aiohttp_kwargs,
         )
 
@@ -510,7 +513,7 @@ class Spider(SpiderHook):
                 tasks = asyncio.all_tasks(self.loop)
                 self.logger.debug('not have new request, now loop has %s task' % tasks.__len__())
 
-                if not await self.queue_tasks() and len(tasks) <=1:
+                if not await self.queue_tasks() and len(tasks) <= 1:
                     self.logger.info('Stop Spider')
                     break
                 continue
@@ -522,7 +525,6 @@ class Spider(SpiderHook):
                 self.handle_request(request_item, sem)
             )
 
-
     async def get_request(self):
         try:
             request = self.request_queue.get_nowait()
@@ -530,14 +532,12 @@ class Spider(SpiderHook):
             request = None
         return request
 
-
     async def queue_tasks(self):
         """
         :param judge has task
         :return:
         """
         return self.request_queue.qsize() > 0
-
 
     async def stop(self, _signal):
         """

@@ -1,0 +1,25 @@
+
+Š	python:S1192q"òDefine a constant instead of duplicating this literal 'cangjieStatus_OVERSEA2=false; Ecp_ClientId=3220420165906692312; Ecp_ClientIp=58.212.197.233; cnkiUserKey=ee6aa094-fcc6-a640-b23b-10ad197d8a3b; UM_distinctid=1805942f889139-08460b80622352-6b3e555b-1fa400-1805942f88a19c; Ecp_loginuserbk=SJTU; ASPSESSIONIDQAQARSQB=IGLLNFLDHBJLFBNFBJCDKCHH; eng_k55_id=123103; ASP.NET_SessionId=ilohuot5qitecjljviujyzir; knsLeftGroupSelectItem=1%3B2%3B; CurrSortFieldType=desc; _pk_ref=%5B%22%22%2C%22%22%2C1663571791%2C%22https%3A%2F%2Fwww.baidu.com%2Flink%3Furl%3DqAyApXZe7PsZK9kKQnBIEEf99Su4R9AoFfYWu3EyTO7%26wd%3D%26eqid%3Daac36a410010483b000000046328174c%22%5D; _pk_id=1da07332-73dd-494e-b5d9-3a9b652545aa.1650445190.30.1663571791.1663571791.; ASPSESSIONIDQCSDQQTA=JACKACDCAOAFCOMKELGEGIIF; dstyle=listmode; dsorder=pubdate; CurrSortField=Publication+Date%2f(%e5%8f%91%e8%a1%a8%e6%97%b6%e9%97%b4%2c%27TIME%27); ASPSESSIONIDQCQBRTSB=KFFFOMIAANJBPBIJBDIDDCCM; Ecp_IpLoginFail=22101758.212.197.250; ASPSESSIONIDSCQDTQTA=GIKMHACCABAJAAIOCEMOEMHK; CNZZDATA1279462118=620665052-1650760587-%7C1665995467; dblang=ch; dperpage=50; searchTimeFlag=1' 3 times.(àœæz
+Hpython:S1481š"*Remove the unused local variable "jsonFM".(²¸ç¬úÿÿÿÿ
+qpython:S117”"YRename this local variable "formData" to match the regular expression ^[_a-z][a-z0-9_]*$.(ø½”™
+Upython:S5754•"<Specify an exception class to catch or reraise the exception(ˆÊÉ·
+qpython:S1171"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(”‰øì
+vpython:S1192ƒ"]Define a constant instead of duplicating this literal './/td[@class="name"]/a/@href' 4 times.(ŠŠ¨°
+‡python:S1192„"nDefine a constant instead of duplicating this literal './/td/span[@title="Chinese Full Text"]/text()' 4 times.(…Þàý
+Žpython:S1192r"qDefine a constant instead of duplicating this literal 'application/x-www-form-urlencoded; charset=UTF-8' 4 times.(Ü…¸Ÿúÿÿÿÿ
+qpython:S117v"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(¿½Ú÷
+;python:S125C"Remove this commented out code.(µŽÿúÿÿÿÿ
+<python:S125Ö"Remove this commented out code.(¾´Ùêüÿÿÿÿ
+ipython:S1542‘"PRename function "queryParse" to match the regular expression ^[a-z_][a-z0-9_]*$.(èË†£
+;python:S125^"Remove this commented out code.(¹Å¾›ûÿÿÿÿ
+ppython:S117"YRename this local variable "formData" to match the regular expression ^[_a-z][a-z0-9_]*$.(ŽÁÎy
+mpython:S117Œ"URename this local variable "isEN" to match the regular expression ^[_a-z][a-z0-9_]*$.(¹¦ñ‘
+Cpython:S1481—"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ
+rpython:S117¨"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(”‰øì
+rpython:S117ò"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(¿½Ú÷
+lpython:S117"URename this parameter "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(»“™‡
+Æpython:S1192p"­Define a constant instead of duplicating this literal 'https://oversea.cnki.net/kns/AdvSearch?dbcode=CFLS&crossDbcodes=CJFQ,CDMD,CIPD,CCND,CYFD,CCJD,BDZK,CISD,CJFN' 3 times.(€Âàø
+Ópython:S1192o"µDefine a constant instead of duplicating this literal 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36' 4 times.(ßÉÜ®øÿÿÿÿ
+lpython:S117›"TRename this parameter "formData" to match the regular expression ^[_a-z][a-z0-9_]*$.(Àƒñ
+rpython:S3776»"TRefactor this function to reduce its Cognitive Complexity from 41 to the 15 allowed.(Ÿ¸³°ýÿÿÿÿ
+tpython:S117š"WRename this local variable "jsonFM" to match the regular expression ^[_a-z][a-z0-9_]*$.(²¸ç¬úÿÿÿÿ

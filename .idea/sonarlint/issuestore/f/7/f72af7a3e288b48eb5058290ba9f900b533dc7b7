@@ -1,0 +1,6 @@
+
+¶python:S1515"œAdd a parameter to the parent lambda function and use variable "signal" as its default value; The value of "signal" might change at the next loop iteration.(ıƒÍÈ
+xpython:S5890"`Assign to "aiohttp_kwargs" a value of type "dict" instead of "NoneType" or update its type hint.(ñ­õ­
+lpython:S3776ò"TRefactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.(“¼”
+}python:S58907"eAssign to "callback_result_map" a value of type "dict" instead of "NoneType" or update its type hint.(ŸåˆÈ
+Cpython:S1481æ"%Remove the unused local variable "i".(Ìã àÿÿÿÿÿ

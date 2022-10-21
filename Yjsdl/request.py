@@ -58,7 +58,6 @@ class Request:
             headers: dict = None,
             meta: dict = None,
             request_config: dict = None,
-            request_session=None,
             priority: Optional[int] = 1,
             **aiohttp_kwargs,
     ):
@@ -87,7 +86,6 @@ class Request:
         self.encoding = encoding
         self.headers = headers or {}
         self.meta = meta or {}
-        self.request_session = request_session
         self.priority = priority
         self.request_config = (
             self.REQUEST_CONFIG if request_config is None else request_config
@@ -103,92 +101,6 @@ class Request:
         # 自定义的类定义了__lt__, 可以比较大小
         # 解决 TypeError: '<' not supported between instances of 'Request' and 'Request'
         return self.priority < other.priority
-
-    async def fetch(self, delay=True) -> Response:
-        """Fetch all the information by using aiohttp"""
-        if delay and self.request_config.get("DELAY", 0) > 0:
-            await asyncio.sleep(self.request_config["DELAY"])
-
-        try:
-            content, resp = await self._make_request()
-            try:
-                resp_encoding = resp.get_encoding()
-            except:
-                resp_encoding = self.encoding
-
-            response = Response(
-                url=str(resp.url),
-                method=resp.method,
-                encoding=resp_encoding,
-                meta=self.meta,
-                cookies=resp.cookies,
-                history=resp.history,
-                headers=resp.headers,
-                status=resp.status,
-                content=content
-            )
-            # Retry middleware
-            # response is coroutine，修改响应数据
-            aws_valid_response = self.request_config.get("VALID")
-            if aws_valid_response and iscoroutinefunction(aws_valid_response):
-                response = await aws_valid_response(response)
-            if response.ok:
-                return response
-            else:
-                return await self._retry(
-                    error_msg=f"Request url failed with status {response.status}!"
-                )
-        except asyncio.TimeoutError:
-            return await self._retry(error_msg="timeout")
-        except Exception as e:
-            return await self._retry(error_msg=e)
-
-    async def _make_request(self):
-        """Make a request by using aiohttp"""
-        self.logger.info(f"<{self.method}: {self.url}>")
-        self.aiohttp_kwargs.setdefault('headers', self.headers)
-        self.aiohttp_kwargs.setdefault('params', self.params)
-        self.aiohttp_kwargs.setdefault('data', self.data)
-        self.aiohttp_kwargs.setdefault('timeout',
-                                       aiohttp.ClientTimeout(total=(self.request_config.get("TIMEOUT", 10000))))
-
-        async with aiohttp.ClientSession(cookies=self.cookie, connector=aiohttp.TCPConnector(ssl=False),
-                                         trust_env=True) as session:
-            request_func = await session.request(method=self.method, url=self.url, ssl=self.ssl, **self.aiohttp_kwargs)
-            content = await request_func.read()
-        return content, request_func
-
-    async def _retry(self, error_msg):
-        """Manage request"""
-        if self.retry_times > 0:
-            # Sleep to give server a chance to process/cache prior request
-            if self.request_config.get("RETRY_DELAY", 0) > 0:
-                await asyncio.sleep(self.request_config["RETRY_DELAY"])
-
-            retry_times = self.request_config.get("RETRIES", 3) - self.retry_times + 1
-            self.logger.exception(
-                f"<Retry url: {self.url}>, Retry times: {retry_times}, Retry message: {error_msg}>"
-            )
-            self.retry_times -= 1
-
-            # 加载重试时的配置
-            retry_func = self.request_config.get("RETRY_FUNC")
-            if retry_func and iscoroutinefunction(retry_func):
-                request_ins = await retry_func(weakref.proxy(self))
-                if isinstance(request_ins, Request):
-                    return await request_ins.fetch(delay=False)
-            return await self.fetch(delay=False)
-        else:
-            response = Response(
-                url=self.url,
-                method=self.method,
-                meta=self.meta,
-                cookies={},
-                history=(),
-                headers=None,
-            )
-
-            return response
 
     def __repr__(self):
         return f"<{self.method} {self.url}>"

@@ -2,7 +2,6 @@
 
 from Yjsdl import Spider, item
 # from Yjsdl.utils.UserAgent import middleware
-from testmidl import middleware
 
 
 async def retry_func(request):
@@ -18,11 +17,11 @@ class RetryDemo(Spider):
     }
 
     concurrency = 4
-    aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
+    # aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
 
     # start_urls = [f"http://httpbin.org/get?p={i}" for i in range(0, 5)]
     async def start_requests(self):
-        for i in range(1, 10):
+        for i in range(1, 5):
             yield self.request(
                 url=f"http://httpbin.org/get?p={i}"
 
@@ -45,4 +44,4 @@ class RetryDemo(Spider):
 
 
 if __name__ == "__main__":
-    RetryDemo.start(middleware=middleware)
+    RetryDemo.start()

@@ -1,0 +1,6 @@
+
+qpython:S117Q"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(‹äˆ‘
+qpython:S117*"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(”‰øì
+xpython:S11869"[Add a nested comment explaining why this function is empty, or complete the implementation.(·‹ş±úÿÿÿÿ
+wpython:S117"ZRename this local variable "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÍÉüüÿÿÿÿ
+lpython:S117"URename this parameter "QueryJson" to match the regular expression ^[_a-z][a-z0-9_]*$.(»“™‡
