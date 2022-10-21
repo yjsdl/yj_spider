@@ -59,6 +59,7 @@ class Request:
             meta: dict = None,
             request_config: dict = None,
             request_session=None,
+            priority: Optional[int] = 1,
             **aiohttp_kwargs,
     ):
         """
@@ -79,7 +80,7 @@ class Request:
         if self.method not in self.METHOD:
             raise InvalidRequestMethod(f"{self.method} method is not supported")
 
-        self.params = params or ''
+        self.params = params or {}
         self.cookie = cookies or {}
         self.data = data or {}
         self.callback = callback
@@ -87,6 +88,7 @@ class Request:
         self.headers = headers or {}
         self.meta = meta or {}
         self.request_session = request_session
+        self.priority = priority
         self.request_config = (
             self.REQUEST_CONFIG if request_config is None else request_config
         )
@@ -97,22 +99,18 @@ class Request:
         self.logger = get_logger(name=self.name)
         self.retry_times = self.request_config.get("RETRIES", 3)
 
-    @property
-    def current_request_session(self):
-        if self.request_session is None:
-            self.request_session = aiohttp.ClientSession()
-            self.close_request_session = True
-        return self.request_session
+    def __lt__(self, other):
+        # 自定义的类定义了__lt__, 可以比较大小
+        # 解决 TypeError: '<' not supported between instances of 'Request' and 'Request'
+        return self.priority < other.priority
 
     async def fetch(self, delay=True) -> Response:
         """Fetch all the information by using aiohttp"""
         if delay and self.request_config.get("DELAY", 0) > 0:
             await asyncio.sleep(self.request_config["DELAY"])
 
-        timeout = self.request_config.get("TIMEOUT", 10)
         try:
-            async with async_timeout.timeout(timeout):
-                resp = await self._make_request()
+            content, resp = await self._make_request()
             try:
                 resp_encoding = resp.get_encoding()
             except:
@@ -127,9 +125,7 @@ class Request:
                 history=resp.history,
                 headers=resp.headers,
                 status=resp.status,
-                aws_json=resp.json,
-                aws_text=resp.text,
-                aws_read=resp.read,
+                content=content
             )
             # Retry middleware
             # response is coroutine，修改响应数据
@@ -146,56 +142,21 @@ class Request:
             return await self._retry(error_msg="timeout")
         except Exception as e:
             return await self._retry(error_msg=e)
-        finally:
-            # Close client session
-            if self.close_request_session:
-                await self._close_request()
-
-    # 进入request的第一个协程
-    async def fetch_callback(
-            self, sem: Semaphore
-    ) -> Tuple[AsyncGeneratorType, Response]:
-        """
-        Request the target url and then call the callback function
-        :param sem: Semaphore
-        :return: Tuple[AsyncGeneratorType, Response]
-        """
-        try:
-            async with sem:
-                response = await self.fetch()
-        except Exception as e:
-            response = None
-            self.logger.error(f"<Error: {self.url} {e}>")
-
-        if self.callback is not None:
-            if iscoroutinefunction(self.callback):
-                callback_result = await self.callback(response)
-            else:
-                callback_result = self.callback(response)
-        else:
-            callback_result = None
-        return callback_result, response
-
-    async def _close_request(self):
-        """
-        Close the aiohttp session
-        :return:
-        """
-        await self.request_session.close()
 
     async def _make_request(self):
         """Make a request by using aiohttp"""
         self.logger.info(f"<{self.method}: {self.url}>")
-        if self.method == "GET":
-            request_func = self.current_request_session.get(
-                self.url, headers=self.headers, ssl=self.ssl, **self.aiohttp_kwargs
-            )
-        else:
-            request_func = self.current_request_session.post(
-                self.url, headers=self.headers, params=self.params, data=self.data, ssl=self.ssl, **self.aiohttp_kwargs
-            )
-        resp = await request_func
-        return resp
+        self.aiohttp_kwargs.setdefault('headers', self.headers)
+        self.aiohttp_kwargs.setdefault('params', self.params)
+        self.aiohttp_kwargs.setdefault('data', self.data)
+        self.aiohttp_kwargs.setdefault('timeout',
+                                       aiohttp.ClientTimeout(total=(self.request_config.get("TIMEOUT", 10000))))
+
+        async with aiohttp.ClientSession(cookies=self.cookie, connector=aiohttp.TCPConnector(ssl=False),
+                                         trust_env=True) as session:
+            request_func = await session.request(method=self.method, url=self.url, ssl=self.ssl, **self.aiohttp_kwargs)
+            content = await request_func.read()
+        return content, request_func
 
     async def _retry(self, error_msg):
         """Manage request"""

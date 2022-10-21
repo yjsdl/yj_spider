@@ -46,8 +46,8 @@ class Test:
     def test1(self):
         a = '1'
 
-    def test2(self):
+    async def test2(self):
         b = '2'
 c = Test()
 
-print(c)
+print(c.test2())

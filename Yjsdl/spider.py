@@ -11,6 +11,7 @@ from functools import reduce
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
 from types import AsyncGeneratorType
+from typing import AsyncGenerator, Generator, Coroutine
 
 from aiohttp import ClientSession
 
@@ -120,7 +121,17 @@ class Spider(SpiderHook):
 
     name = "Yjsdl"
     # 请求配置
-    request_config = None
+    request_config = {
+        "RETRIES": 3,
+        "DELAY": 0,
+        "RETRY_DELAY": 0,
+        # 超时时间
+        "TIMEOUT": 10,
+        # 设置重试的参数
+        "RETRY_FUNC": Coroutine,
+        # 对响应数据修改
+        "VALID": Coroutine,
+    }
 
     start_urls: list = []
     # Default values passing to each request object. Not implemented yet.
@@ -134,6 +145,8 @@ class Spider(SpiderHook):
 
     # Concurrency control
     worker_numbers: int = 3
+
+    wait_time: int = 3
     # 并发
     concurrency: int = 3
 
@@ -156,9 +169,10 @@ class Spider(SpiderHook):
         :param spider_kwargs
         """
 
-        if not self.start_urls and not isinstance(self.start_requests(), AsyncGeneratorType):
+        if not self.start_urls and not isinstance(self.start_requests(), AsyncGenerator):
             raise ValueError(
                 "Your subject should have start_urls or async function example: start_urls = ['www.baidu.com'] ")
+
 
         self.loop = loop
         asyncio.set_event_loop(self.loop)
@@ -186,33 +200,28 @@ class Spider(SpiderHook):
             self.middleware = middleware or Middleware()
 
         # async queue as a producer
-        self.request_queue = asyncio.Queue()
+        self.request_queue = asyncio.PriorityQueue()
 
         # semaphore, used for concurrency control
-        self.sem = asyncio.Semaphore(self.concurrency)
+
+
 
     async def _process_async_callback(
-            self, callback_results: AsyncGeneratorType, response: Response = None
+            self, callback_result, response: Response = None
     ):
         try:
-            async for callback_result in callback_results:
-                if isinstance(callback_result, AsyncGeneratorType):
-                    await self._process_async_callback(callback_result)
-                elif isinstance(callback_result, Request):
-                    self.request_queue.put_nowait(
-                        self.handle_request(request=callback_result)
-                    )
-                elif isinstance(callback_result, typing.Coroutine):
-                    self.request_queue.put_nowait(
-                        self.handle_callback(
-                            aws_callback=callback_result, response=response
-                        )
-                    )
-                elif isinstance(callback_result, Item):
-                    # Process target item
-                    await self._process_item(callback_result)
-                else:
-                    await self.process_callback_result(callback_result=callback_result)
+            if isinstance(callback_result, AsyncGenerator):
+                await self._process_async_callback(callback_result)
+            elif isinstance(callback_result, Request):
+                self.request_queue.put_nowait(callback_result)
+            elif isinstance(callback_result, Coroutine):
+                await callback_result
+
+            elif isinstance(callback_result, Item):
+                # Process target item
+                await self._process_item(callback_result)
+            else:
+                await self.process_callback_result(callback_result=callback_result)
         except NothingMatchedError as e:
             error_info = f"<Field: {str(e).lower()}" + f", error url: {response.url}>"
             self.logger.exception(error_info)
@@ -234,6 +243,17 @@ class Spider(SpiderHook):
                 # Process failed response
                 self.failed_counts += 1
                 await self.process_failed_response(request, response)
+
+    async def process_succeed_response(self, request, response):
+
+        if request.callback:
+            callback = request.callback
+            callback_result = callback(response)
+            await self._process_async_callback(
+                callback_result, response
+            )
+
+
 
     async def _run_request_middleware(self, request: Request):
         if self.middleware.request_middleware:
@@ -269,17 +289,17 @@ class Spider(SpiderHook):
         self.logger.info("Spider started!")
         start_time = datetime.now()
 
-        # Add signal
-        for signal in (SIGINT, SIGTERM):
-            try:
-                self.loop.add_signal_handler(
-                    signal, lambda: asyncio.ensure_future(self.stop(signal))
-                )
-            except NotImplementedError:
-                self.logger.warning(
-                    f"{self.name} tried to use loop.add_signal_handler "
-                    "but it is not implemented on this platform."
-                )
+        # # Add signal
+        # for signal in (SIGINT, SIGTERM):
+        #     try:
+        #         self.loop.add_signal_handler(
+        #             signal, lambda: asyncio.ensure_future(self.stop(signal))
+        #         )
+        #     except NotImplementedError:
+        #         self.logger.warning(
+        #             f"{self.name} tried to use loop.add_signal_handler "
+        #             "but it is not implemented on this platform."
+        #         )
         # Run hook before spider start crawling
         await self._run_spider_hook(after_start)
 
@@ -287,7 +307,10 @@ class Spider(SpiderHook):
         try:
             # 基本middleware
             self.middleware.request_middleware.append(request_ua)
-            await self.start_master()
+            # 初始化请求
+            _start_requests = await self.start_master()
+
+            await self.start_worker()
         finally:
             # Run hook after spider finished crawling
             await self._run_spider_hook(before_stop)
@@ -369,24 +392,27 @@ class Spider(SpiderHook):
 
     # 从此开始
     async def handle_request(
-            self, request: Request
-    ) -> typing.Tuple[AsyncGeneratorType, Response]:
+            self, request: Request, sem):
+    # ) -> typing.Tuple[AsyncGeneratorType, Response]:
         """
         Wrap request with middleware.
         :param request:
         :return:
         """
-        callback_result, response = None, None
 
         try:
             # 请求中间件
             await self._run_request_middleware(request)
             # 发送请求，调用回调函数
-            callback_result, response = await request.fetch_callback(self.sem)
+            # callback_result, response = await request.fetch_callback()
+            response = await request.fetch()
+            sem.release()
             # 响应后中间件
             await self._run_response_middleware(request, response)
             # 统计成功，失败次数
+
             await self._process_response(request=request, response=response)
+
         except NotImplementedParseError as e:
             self.logger.exception(e)
         except NothingMatchedError as e:
@@ -395,27 +421,6 @@ class Spider(SpiderHook):
         except Exception as e:
             self.logger.exception(f"<Callback[{request.callback.__name__}]: {e}")
 
-        return callback_result, response
-
-    async def multiple_request(self, urls, is_gather=False, **kwargs):
-        """
-        For crawling multiple urls
-        """
-        if is_gather:
-            resp_results = await asyncio.gather(
-                *[self.handle_request(self.request(url=url, **kwargs)) for url in urls],
-                return_exceptions=True,
-            )
-            for index, task_result in enumerate(resp_results):
-                if not isinstance(task_result, RuntimeError) and task_result:
-                    _, response = task_result
-                    response.index = index
-                    yield response
-        else:
-            for index, url in enumerate(urls):
-                _, response = await self.handle_request(self.request(url=url, **kwargs))
-                response.index = index
-                yield response
 
     async def start_requests(self):
         """
@@ -489,42 +494,50 @@ class Spider(SpiderHook):
         Actually start crawling
         """
         async for request_ins in self.start_requests():
-            self.request_queue.put_nowait(self.handle_request(request_ins))
-        workers = [
-            asyncio.ensure_future(self.start_worker())
-            for i in range(self.worker_numbers)
-        ]
-        for worker in workers:
-            self.logger.info(f"Worker started: {id(worker)}")
-        await self.request_queue.join()
-
-        if not self.is_async_start:
-            await self.stop(SIGINT)
-        else:
-            if self.cancel_tasks:
-                await self.cancel_all_tasks()
+            self.request_queue.put_nowait(request_ins)
 
     async def start_worker(self):
         """
         Start spider worker
         :return:
         """
+        sem = asyncio.Semaphore(value=self.concurrency)
         while True:
-            request_item = await self.request_queue.get()
-            self.worker_tasks.append(request_item)
-            if self.request_queue.empty():
-                results = await asyncio.gather(
-                    *self.worker_tasks, return_exceptions=True
-                )
-                for task_result in results:
-                    if not isinstance(task_result, RuntimeError) and task_result:
-                        callback_results, response = task_result
-                        if isinstance(callback_results, AsyncGeneratorType):
-                            await self._process_async_callback(
-                                callback_results, response
-                            )
-                self.worker_tasks = []
-            self.request_queue.task_done()
+            # 不断获取一个请求
+            request_item = await self.get_request()
+            if request_item is None:
+                await asyncio.sleep(self.wait_time)
+                tasks = asyncio.all_tasks(self.loop)
+                self.logger.debug('not have new request, now loop has %s task' % tasks.__len__())
+
+                if not await self.queue_tasks() and len(tasks) <=1:
+                    self.logger.info('Stop Spider')
+                    break
+                continue
+
+            await sem.acquire()
+            await asyncio.sleep(self.request_config.get('DELAY', 0))
+            # 执行请求
+            self.loop.create_task(
+                self.handle_request(request_item, sem)
+            )
+
+
+    async def get_request(self):
+        try:
+            request = self.request_queue.get_nowait()
+        except asyncio.queues.QueueEmpty:
+            request = None
+        return request
+
+
+    async def queue_tasks(self):
+        """
+        :param judge has task
+        :return:
+        """
+        return self.request_queue.qsize() > 0
+
 
     async def stop(self, _signal):
         """

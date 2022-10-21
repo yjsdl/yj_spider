@@ -35,9 +35,8 @@ class Response(object):
             history,
             headers=None,
             status: int = -1,
-            aws_json: Callable = None,
-            aws_read: Callable = None,
-            aws_text: Callable = None,
+            text=None,
+            content=b''
     ):
         self._callback_result = None
         self._encoding = encoding
@@ -51,10 +50,8 @@ class Response(object):
         self._headers = headers
         self._status = status
         self._ok = self._status == 0 or 200 <= self._status <= 299
-
-        self._aws_json = aws_json
-        self._aws_read = aws_read
-        self._aws_text = aws_text
+        self._text = text
+        self._content = content
 
     @property
     def callback_result(self):
@@ -140,23 +137,26 @@ class Response(object):
             encoding: str = None,
             loads: JSONDecoder = DEFAULT_JSON_DECODER,
             content_type: Optional[str] = "application/json",
+            **kwargs
     ) -> Any:
         """Read and decodes JSON response."""
         encoding = encoding or self._encoding
-        return await self._aws_json(
-            encoding=encoding, loads=loads, content_type=content_type
-        )
+        return json.loads(
+                        self._content.decode(encoding), **kwargs)
 
     async def read(self) -> bytes:
         """Read response payload."""
-        return await self._aws_read()
+        return self._content
 
     async def text(
             self, *, encoding: Optional[str] = None, errors: str = "strict"
     ) -> str:
         """Read response payload and decode."""
         encoding = encoding or self._encoding
-        self._html = await self._aws_text(encoding=encoding, errors=errors)
+        if not self._content:
+            return ''
+
+        self._html = str(self._content, encoding=encoding, errors=errors)
         return self._html
 
     def __repr__(self):
