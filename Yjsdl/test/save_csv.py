@@ -13,7 +13,7 @@ class RetryDemo(Spider):
     request_config = {
         "RETRIES": 3,
         "DELAY": 0,
-        "TIMEOUT": 0.2,
+        "TIMEOUT": 10,
         "RETRY_FUNC": retry_func,
     }
 
@@ -22,7 +22,7 @@ class RetryDemo(Spider):
 
     # start_urls = [f"http://httpbin.org/get?p={i}" for i in range(0, 5)]
     async def start_requests(self):
-        for i in range(1, 2):
+        for i in range(1, 10):
             yield self.request(
                 url=f"http://httpbin.org/get?p={i}"
 
