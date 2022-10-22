@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import asyncio
-import collections
 import sys
 import typing
 import weakref
@@ -10,10 +9,7 @@ from datetime import datetime
 from functools import reduce
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
-from types import AsyncGeneratorType
 from typing import AsyncGenerator, Generator, Coroutine
-
-from aiohttp import ClientSession
 
 from Yjsdl.exceptions import (
     InvalidCallbackResult,
@@ -56,7 +52,7 @@ class SpiderHook:
     SpiderHook is used for extend spider
     """
 
-    callback_result_map: dict = None
+    callback_result_map: dict = {}
 
     async def _run_spider_hook(self, hook_func):
         """
@@ -138,7 +134,7 @@ class Spider(SpiderHook):
     # Default values passing to each request object. Not implemented yet.
 
     # meta: dict = None
-    aiohttp_kwargs: dict = None
+    aiohttp_kwargs: dict = {}
 
     # Some fields for statistics
     failed_counts: int = 0
@@ -209,24 +205,29 @@ class Spider(SpiderHook):
         try:
             if isinstance(callback_result, AsyncGenerator):
                 async for result in callback_result:
-                    self.request_queue.put_nowait(result)
-            elif isinstance(callback_result, Request):
-                self.request_queue.put_nowait(callback_result)
+                    if isinstance(result, Request):
+                        self.request_queue.put_nowait(result)
+                    elif isinstance(result, Item):
+                        # Process target item
+                        await self._process_item(result)
+                    else:
+                        await self.process_callback_result(callback_result=result)
+            elif isinstance(callback_result, Generator):
+                for result in callback_result:
+                    await result
             elif isinstance(callback_result, Coroutine):
                 await callback_result
-
-            elif isinstance(callback_result, Item):
-                # Process target item
-                await self._process_item(callback_result)
             else:
-                await self.process_callback_result(callback_result=callback_result)
+                pass
+
         except NothingMatchedError as e:
             error_info = f"<Field: {str(e).lower()}" + f", error url: {response.url}>"
             self.logger.exception(error_info)
         except Exception as e:
             self.logger.exception(e)
 
-    async def _process_item(self, item):
+    @staticmethod
+    async def _process_item(item):
         func = item.__class__.name
         if func == "CsvFile":
             await field.CsvFile().process_item(item)
@@ -260,7 +261,6 @@ class Spider(SpiderHook):
         """
         if isinstance(response, Request):
             self.request_queue.put_nowait(response)
-
 
     async def _run_request_middleware(self, request: Request):
         if self.middleware.request_middleware:
@@ -398,10 +398,10 @@ class Spider(SpiderHook):
 
     # 从此开始
     async def handle_request(
-            self, request: Request, sem):
-        # ) -> typing.Tuple[AsyncGeneratorType, Response]:
+            self, request: Request, semaphore):
         """
         Wrap request with middleware.
+        :param semaphore:
         :param request:
         :return:
         """
@@ -412,7 +412,7 @@ class Spider(SpiderHook):
             # 发送请求，调用回调函数
             # callback_result, response = await request.fetch_callback()
             response = await DownloadHandler().fetch(request)
-            sem.release()
+            semaphore.release()
             # 响应后中间件
             await self._run_response_middleware(request, response)
             # 统计成功，失败次数
@@ -446,19 +446,21 @@ class Spider(SpiderHook):
             self,
             url: str,
             method: str = "GET",
-            params=None,
-            data=None,
-            cookies=None,
+            params: dict = None,
+            data: dict = None,
+            cookies: dict = None,
             callback=None,
             encoding: typing.Optional[str] = None,
             headers: dict = None,
             meta: dict = None,
             request_config: dict = None,
-            request_session=None,
             **aiohttp_kwargs,
     ):
         """
         Init a Request class for crawling html
+        :param cookies:
+        :param data:
+        :param params:
         :param url:
         :param method:
         :param callback:
@@ -466,7 +468,6 @@ class Spider(SpiderHook):
         :param headers:
         :param meta:
         :param request_config:
-        :param request_session:
         :param aiohttp_kwargs:
         :return:
         """
@@ -504,7 +505,7 @@ class Spider(SpiderHook):
         Start spider worker
         :return:
         """
-        sem = asyncio.Semaphore(value=self.concurrency)
+        semaphore = asyncio.Semaphore(value=self.concurrency)
         while True:
             # 不断获取一个请求
             request_item = await self.get_request()
@@ -518,11 +519,11 @@ class Spider(SpiderHook):
                     break
                 continue
 
-            await sem.acquire()
+            await semaphore.acquire()
             await asyncio.sleep(self.request_config.get('DELAY', 0))
             # 执行请求
             self.loop.create_task(
-                self.handle_request(request_item, sem)
+                self.handle_request(request_item, semaphore)
             )
 
     async def get_request(self):
@@ -534,7 +535,8 @@ class Spider(SpiderHook):
 
     async def queue_tasks(self):
         """
-        :param judge has task
+        judge has task
+        :param:
         :return:
         """
         return self.request_queue.qsize() > 0

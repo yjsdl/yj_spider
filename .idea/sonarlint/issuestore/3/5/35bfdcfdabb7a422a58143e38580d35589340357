@@ -1,8 +1,4 @@
 
-lpython:S3776÷"TRefactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed.(“¼”
-<python:S2772ß"Remove this unneeded "pass".(ã‘Û¾8è…ñ…¿0
-}python:S58908"eAssign to "callback_result_map" a value of type "dict" instead of "NoneType" or update its type hint.(ŸåˆÈ
-ypython:S5890€"`Assign to "aiohttp_kwargs" a value of type "dict" instead of "NoneType" or update its type hint.(ñ­õ­
-Mpython:S1481Þ"(Remove the unused local variable "name".(ðÚá·ÿÿÿÿÿ8…²ð…¿0
-Cpython:S1481ë"%Remove the unused local variable "i".(Ìã àÿÿÿÿÿ
-¶python:S1515’"œAdd a parameter to the parent lambda function and use variable "signal" as its default value; The value of "signal" might change at the next loop iteration.(ýƒÍÈ
+Hpython:S108á")Either remove or fill this block of code.(ã‘Û¾8½ÄÅÝ¿0
+€python:S5890"`Assign to "aiohttp_kwargs" a value of type "dict" instead of "NoneType" or update its type hint.(ñ­õ­8ŸÂòÜ¿0
+„python:S5890;"eAssign to "callback_result_map" a value of type "dict" instead of "NoneType" or update its type hint.(ŸåˆÈ8ŸÂòÜ¿0

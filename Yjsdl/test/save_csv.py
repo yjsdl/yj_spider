@@ -16,14 +16,14 @@ class RetryDemo(Spider):
         "RETRY_FUNC": retry_func,
     }
 
-    concurrency = 4
+    concurrency = 2
     # aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
 
     # start_urls = [f"http://httpbin.org/get?p={i}" for i in range(0, 5)]
     async def start_requests(self):
-        for i in range(1, 5):
+        for i in range(1, 50):
             yield self.request(
-                url=f"http://httpbin.org/get?p={i}"
+                url=f"http://httpbin.org/get?p=1"
 
             )
 
