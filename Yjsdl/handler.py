@@ -69,12 +69,22 @@ class DownloadHandler:
         """Make a request by using aiohttp"""
         self.logger.info(f"<{request.method}: {request.url}>")
         aiohttp_kwargs = {}
+        # aiohttp_kwargs.update(aiohttp_kwargs.deepcopy())
         aiohttp_kwargs.setdefault('headers', request.headers)
         aiohttp_kwargs.setdefault('params', request.params)
         aiohttp_kwargs.setdefault('data', request.data)
         aiohttp_kwargs.setdefault('ssl', request.ssl)
         aiohttp_kwargs.setdefault('timeout',
-                                  aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
+                              aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
+
+        aiohttp_kwargs.update(request.aiohttp_kwargs)
+        # print(aiohttp_kwargs)
+        # 重新加载配置
+        # aiohttp_kwargs['headers'] = request.headers
+        # aiohttp_kwargs['params'] = request.params
+        # aiohttp_kwargs['data'] = request.data
+        # aiohttp_kwargs['ssl'] = request.ssl
+        # aiohttp_kwargs['timeout'] = aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10))
 
         async with aiohttp.ClientSession(cookies=request.cookie, connector=aiohttp.TCPConnector(ssl=False),
                                          trust_env=True) as session:

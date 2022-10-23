@@ -1,0 +1,7 @@
+aiohttp>=3.5.4
+lxml
+aiofiles
+aiocsv
+
+[uvloop]
+uvloop

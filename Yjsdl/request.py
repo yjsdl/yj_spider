@@ -12,7 +12,6 @@ import aiohttp
 import async_timeout
 
 from Yjsdl.exceptions import InvalidRequestMethod
-from Yjsdl.response import Response
 from Yjsdl.utils import get_logger
 
 try:

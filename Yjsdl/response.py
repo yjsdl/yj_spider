@@ -50,7 +50,6 @@ class Response(object):
         self._headers = headers
         self._status = status
         self._ok = self._status == 0 or 200 <= self._status <= 299
-        self._text = text
         self._content = content
 
     @property
@@ -140,9 +139,12 @@ class Response(object):
             **kwargs
     ) -> Any:
         """Read and decodes JSON response."""
-        encoding = encoding or self._encoding
-        return json.loads(
-                        self._content.decode(encoding), **kwargs)
+        if not encoding and self._encoding and len(self._encoding) > 3:
+
+            encoding = encoding or self._encoding
+            return json.loads(
+                            self._content.decode(encoding), **kwargs)
+        return json.loads(await self.text(), **kwargs)
 
     async def read(self) -> bytes:
         """Read response payload."""

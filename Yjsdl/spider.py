@@ -234,7 +234,7 @@ class Spider(SpiderHook):
 
     async def _process_response(self, request: Request, response: Response):
         if response:
-            if response.ok:
+            if isinstance(response, Response):
                 # Process succeed response
                 self.success_counts += 1
                 await self.process_succeed_response(request, response)

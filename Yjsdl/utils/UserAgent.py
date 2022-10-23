@@ -276,4 +276,3 @@ async def request_ua(spider_ins, request):
     headers = request.headers
     if 'user-agent' not in headers and 'User-Agent' not in headers:
         request.headers.update({'User-Agent': random.choice(ua)})
-        print('更新ua', request.headers)

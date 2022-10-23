@@ -10,7 +10,7 @@ import requests
 from lxml import etree
 from urllib.parse import unquote
 from requests import adapters
-from CNKI.utils.ip import check_ip
+# from CNKI.utils.ip import check_ip
 
 sys.path.append(os.getcwd().replace('\\spiders', '').rsplit('\\', maxsplit=1)[0])
 

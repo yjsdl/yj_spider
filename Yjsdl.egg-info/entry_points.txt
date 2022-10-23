@@ -1,0 +1,3 @@
+[console_scripts]
+Yjsdl = Yjsdl.extend.cmd.cmdline:execute
+yjsdl = Yjsdl.extend.cmd.cmdline:execute

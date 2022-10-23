@@ -29,7 +29,6 @@ class BaseField(object):
 class CsvFile:
 
     def __init__(self):
-        # self.column_index = dict()
         self.writer = False
 
     async def process_item(self, item: CsvItem):

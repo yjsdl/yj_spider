@@ -1,29 +1,39 @@
 # -*- coding: utf-8 -*-
 
 from Yjsdl import Spider, item
+import aiohttp
 # from Yjsdl.utils.UserAgent import middleware
 
 
 async def retry_func(request):
+    print(request.url)
+    # async with aiohttp.ClientSession() as session:
+    #     async with session.get(url='http://httpbin.org/get?p=1') as response:
+    #         print("Status:", response.status)
+    #         print("Content-type:", response.headers['content-type'])
+    #
+    #         html = await response.text()
+    #         print("Body:", html[:15], "...")
     request.request_config["TIMEOUT"] = 10
+    return request
 
 
 class RetryDemo(Spider):
     request_config = {
-        "RETRIES": 3,
+        "RETRIES": 2,
         "DELAY": 0,
-        "TIMEOUT": 10,
+        "TIMEOUT": 0.2,
         "RETRY_FUNC": retry_func,
     }
 
     concurrency = 2
-    # aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
+    aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
 
     # start_urls = [f"http://httpbin.org/get?p={i}" for i in range(0, 5)]
     async def start_requests(self):
-        for i in range(1, 50):
+        for i in range(1, 2):
             yield self.request(
-                url=f"http://httpbin.org/get?p=1"
+                url=f"http://httpbin.org/get?p=1",
 
             )
 
