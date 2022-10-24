@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2022/10/22 17:31
+# @Author  : Liuyijie
+# @File    : spider.py
 
 import asyncio
 import sys
@@ -131,24 +134,15 @@ class Spider(SpiderHook):
     }
 
     start_urls: list = []
-    # Default values passing to each request object. Not implemented yet.
 
-    # meta: dict = None
     aiohttp_kwargs: dict = {}
 
-    # Some fields for statistics
     failed_counts: int = 0
     success_counts: int = 0
-
-    # Concurrency control
-    worker_numbers: int = 3
 
     wait_time: int = 3
     # 并发
     concurrency: int = 3
-
-    # A queue to save coroutines
-    worker_tasks: list = []
 
     def __init__(
             self,
@@ -173,7 +167,6 @@ class Spider(SpiderHook):
         self.loop = loop
         asyncio.set_event_loop(self.loop)
 
-        # Init object-level properties
         self.callback_result_map = self.callback_result_map or {}
 
         self.request_config = self.request_config or {}
@@ -194,10 +187,7 @@ class Spider(SpiderHook):
         else:
             self.middleware = middleware or Middleware()
 
-        # async queue as a producer
         self.request_queue = asyncio.PriorityQueue()
-
-        # semaphore, used for concurrency control
 
     async def _process_async_callback(
             self, callback_result, response: Response = None
@@ -233,13 +223,18 @@ class Spider(SpiderHook):
             await field.CsvFile().process_item(item)
 
     async def _process_response(self, request: Request, response: Response):
+        """
+        cretain
+        :param request:
+        :param response:
+        :return:
+        """
         if response:
             if isinstance(response, Response):
                 # Process succeed response
                 self.success_counts += 1
                 await self.process_succeed_response(request, response)
             else:
-                # Process failed response
                 self.failed_counts += 1
                 await self.process_failed_response(request, response)
 
@@ -549,4 +544,3 @@ class Spider(SpiderHook):
         """
         self.logger.info(f"Stopping spider: {self.name}")
         await self.cancel_all_tasks()
-        # self.loop.stop()

@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2022/8/22 17:31
+# @Author  : Liuyijie
+# @File    : response.py
 
 import asyncio
 import json
@@ -134,8 +137,6 @@ class Response(object):
             self,
             *,
             encoding: str = None,
-            loads: JSONDecoder = DEFAULT_JSON_DECODER,
-            content_type: Optional[str] = "application/json",
             **kwargs
     ) -> Any:
         """Read and decodes JSON response."""

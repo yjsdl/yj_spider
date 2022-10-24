@@ -122,7 +122,7 @@ def queryParse(query: str):
 
 class RetryDemo(Spider):
     request_config = {
-        "RETRIES": 2,
+        "RETRIES": 0,
         "DELAY": 0,
         "TIMEOUT": 10,
         # "RETRY_FUNC": retry_func,
@@ -132,7 +132,7 @@ class RetryDemo(Spider):
     year_url = 'https://oversea.cnki.net/kns/Group/SingleResult'
 
     concurrency = 4
-    aiohttp_kwargs = {'proxy': 'http://127.0.0.1:1080'}
+    # aiohttp_kwargs = {'proxy': 'https://127.0.0.1:1080'}
 
     headers = {
         "Cookie": "cangjieStatus_OVERSEA2=false; Ecp_ClientId=b221016173201619969; Ecp_ClientIp=121.237.217.55; UM_distinctid=183eaf91a078b6-0c646a46d4ef1e-977173c-144000-183eaf91a08c18; dperpage=50; dsorder=pubdate; ASPSESSIONIDQARDTRTA=LPJKPPEBBEJLHPJBNIGPDOEN; eng_k55_id=123103; Ecp_IpLoginFail=221022121.237.217.55; ASP.NET_SessionId=nouspgfcgudat5b5ytbojb02; knsLeftGroupSelectItem=1%3B2%3B; CurrSortField=Publication+Date%2f(%e5%8f%91%e8%a1%a8%e6%97%b6%e9%97%b4%2c%27TIME%27); CurrSortFieldType=desc; CNZZDATA1279462118=1508356872-1666091275-https%253A%252F%252Foversea.cnki.net%252F%7C1666430456; dblang=ch; _pk_ref=%5B%22%22%2C%22%22%2C1666433370%2C%22https%3A%2F%2Fwww.baidu.com%2Flink%3Furl%3Di8Csp0pHLNmJkJFYN8G10bb-N3B5mxZamgcvGnirAfe%26wd%3D%26eqid%3D945bf58100058a7d00000004634ea68a%22%5D; _pk_id=3fc3a8d4-1b31-416b-86a9-60da97b77b4f.1665912785.4.1666433370.1666433370.; _pk_ses=*",
@@ -163,6 +163,7 @@ class RetryDemo(Spider):
             headers=self.headers,
             data=data,
             meta=meta
+
         )
 
     async def parse(self, response):
@@ -187,6 +188,7 @@ class RetryDemo(Spider):
 
     async def acticle_list(self, response):
         meta = response.meta
+
         html = await response.text()
         res = response.html_etree(html=html)
         # 后面都需要用到这个id

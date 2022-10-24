@@ -2,7 +2,6 @@
 
 from Yjsdl import Spider
 from Yjsdl import Request
-from middlewares import middleware
 
 
 async def retry_func(request):

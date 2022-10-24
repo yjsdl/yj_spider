@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2022/10/22 0:23
+# @Time    : 2022/8/22 0:23
 # @Author  : Liuyijie
 # @File    : handler.py
 import asyncio
-import weakref
-
-from asyncio.locks import Semaphore
-from inspect import iscoroutinefunction
-from types import AsyncGeneratorType
-from typing import Coroutine, Optional, Tuple
-
 import aiohttp
-
-from Yjsdl.exceptions import InvalidRequestMethod
-from Yjsdl.response import Response
+from inspect import iscoroutinefunction
+from aiohttp_socks import ProxyConnector
 from Yjsdl.utils import get_logger
-import asyncio
 from Yjsdl import Request, Response
 
 
@@ -54,8 +45,7 @@ class DownloadHandler:
                 status=resp.status,
                 content=content
             )
-            # Retry middleware
-            # response is coroutine，修改响应数据
+            # 处理响应数据
             aws_valid_response = request.request_config.get("VALID")
             if aws_valid_response and iscoroutinefunction(aws_valid_response):
                 response = await aws_valid_response(response)
@@ -66,9 +56,13 @@ class DownloadHandler:
                                          error_msg=f"Request url failed with status {response.status}!"
                                          )
         except asyncio.TimeoutError:
-            return await self._retry(request, error_msg="timeout")
+            return await self._retry(request, error_msg="timeout", status=300)
+        except aiohttp.ClientHttpProxyError as ProxyError:
+            return await self._retry(request, error_msg=ProxyError, status=401)
+        except aiohttp.ClientConnectorError as CCError:
+            return await self._retry(request, error_msg=CCError, status=402)
         except Exception as e:
-            return await self._retry(request, error_msg=e)
+            return await self._retry(request, error_msg=e, status=777)
 
     async def _make_request(self, request):
         """
@@ -78,15 +72,19 @@ class DownloadHandler:
         """
         self.logger.info(f"<{request.method}: {request.url}>")
         aiohttp_kwargs = {}
-        # aiohttp_kwargs.update(aiohttp_kwargs.deepcopy())
         aiohttp_kwargs.setdefault('headers', request.headers)
         aiohttp_kwargs.setdefault('params', request.params)
         aiohttp_kwargs.setdefault('data', request.data)
         aiohttp_kwargs.setdefault('ssl', request.ssl)
         aiohttp_kwargs.setdefault('timeout',
-                              aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
+                                  aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
 
         aiohttp_kwargs.update(request.aiohttp_kwargs)
+        # 使用https代理
+        # connector = ProxyConnector.from_url('socks5://127.0.0.1:1080')
+        #
+        # async with aiohttp.ClientSession(cookies=request.cookie, connector=connector,
+        #                                  trust_env=True) as session:
 
         async with aiohttp.ClientSession(cookies=request.cookie, connector=aiohttp.TCPConnector(ssl=False),
                                          trust_env=True) as session:
@@ -94,7 +92,7 @@ class DownloadHandler:
             content = await request_func.read()
         return content, request_func
 
-    async def _retry(self, request, error_msg):
+    async def _retry(self, request, error_msg, status: int = None):
         """
         request retry
         :param request:
@@ -102,10 +100,8 @@ class DownloadHandler:
         :return:
         """
         if request.retry_times > 0:
-            # Sleep to give server a chance to process/cache prior request
-            if request.request_config.get("RETRY_DELAY", 0) > 0:
-                await asyncio.sleep(request.request_config["RETRY_DELAY"])
 
+            await asyncio.sleep(request.request_config.get("RETRY_DELAY", 0))
             retry_times = request.request_config.get("RETRIES", 3) - request.retry_times + 1
             self.logger.exception(
                 f"<Retry url: {request.url}>, Retry times: {retry_times}, Retry message: {error_msg}>"
@@ -122,7 +118,7 @@ class DownloadHandler:
         else:
             response = Response(
                 url=request.url,
-                status=300,
+                status=status,
                 method=request.method,
                 meta=request.meta,
                 cookies={},

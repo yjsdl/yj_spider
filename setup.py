@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2022/9/22 17:31
+# @Author  : Liuyijie
+# @File    : setup.py
 
 import os
 import re
