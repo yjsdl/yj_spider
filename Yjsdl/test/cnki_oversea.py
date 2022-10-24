@@ -7,7 +7,7 @@ import asyncio
 import json
 import math
 import time
-import requests
+# import requests
 import aiohttp
 import aiofiles
 from hidmiddleware import middleware
@@ -46,45 +46,39 @@ def generate_search_param(QueryJson, en_id, page: int = None, sort: str = 'desc'
 
 # 请求参数
 def generate_muti_group(en_id, sub_name, year):
-    QueryJson = {"Platform": "", "DBCode": en_id, "KuaKuCode": "", "QNode": {"QGroup": [
-        {"Key": "Subject", "Title": "", "Logic": 4, "Items": [], "ChildItems": [
-            {"Key": "input[data-tipid=gradetxt-1]", "Title": "Chinese Library Classification", "Logic": 0, "Items": [
-                {"Key": "", "Title": sub_name, "Logic": 1, "Name": "CLC", "Operate": "=", "Value": sub_name,
-                 "ExtendType": 1,
-                 "ExtendValue": "中英文对照", "Value2": "", "BlurType": "??"}], "ChildItems": []}]},
-        {"Key": "ControlGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": []},
-        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [{"Key": "3", "Title": "", "Logic": 1,
-                                                                                   "Items": [
-                                                                                       {"Key": year, "Title": year,
-                                                                                        "Logic": 2, "Name": "年",
-                                                                                        "Operate": "", "Value": year,
-                                                                                        "ExtendType": 0,
-                                                                                        "ExtendValue": "", "Value2": "",
-                                                                                        "BlurType": ""}],
-                                                                                   "ChildItems": []}]}]},
-                 "CodeLang": ""}
-
     # QueryJson = {"Platform": "", "DBCode": en_id, "KuaKuCode": "", "QNode": {"QGroup": [
     #     {"Key": "Subject", "Title": "", "Logic": 4, "Items": [], "ChildItems": [
-    #         {"Key": "input[data-tipid=gradetxt-1]", "Title": "中图分类号", "Logic": 0, "Items": [
+    #         {"Key": "input[data-tipid=gradetxt-1]", "Title": "Chinese Library Classification", "Logic": 0, "Items": [
     #             {"Key": "", "Title": sub_name, "Logic": 1, "Name": "CLC", "Operate": "=", "Value": sub_name,
     #              "ExtendType": 1,
     #              "ExtendValue": "中英文对照", "Value2": "", "BlurType": "??"}], "ChildItems": []}]},
-    #     {"Key": "ControlGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
-    #         {"Key": ".tit-startend-yearbox", "Title": "", "Logic": 1, "Items": [
-    #             {"Key": ".tit-startend-yearbox", "Title": "出版年度", "Logic": 1, "Name": "YE", "Operate": "",
-    #              "Value": year, "ExtendType": 2, "ExtendValue": "", "Value2": year, "BlurType": ""}],
-    #          "ChildItems": []}]},
     #     {"Key": "ControlGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": []},
-    #     {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [{"Key": "2", "Title": "", "Logic": 1,
+    #     {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [{"Key": "3", "Title": "", "Logic": 1,
     #                                                                                "Items": [
-    #                                                                                    {"Key": "A010?", "Title": "海洋学",
-    #                                                                                     "Logic": 2, "Name": "专题子栏目代码",
-    #                                                                                     "Operate": "", "Value": "A010?",
-    #                                                                                     "ExtendType": 14,
+    #                                                                                    {"Key": year, "Title": year,
+    #                                                                                     "Logic": 2, "Name": "年",
+    #                                                                                     "Operate": "", "Value": year,
+    #                                                                                     "ExtendType": 0,
     #                                                                                     "ExtendValue": "", "Value2": "",
     #                                                                                     "BlurType": ""}],
-    #                                                                                "ChildItems": []}]}]}}
+    #                                                                                "ChildItems": []}]}]},
+    #              "CodeLang": ""}
+
+    QueryJson = {"Platform": "", "DBCode": en_id, "KuaKuCode": "", "QNode": {"QGroup": [
+        {"Key": "Subject", "Title": "", "Logic": 4, "Items": [], "ChildItems": [
+            {"Key": "input[data-tipid=gradetxt-1]", "Title": "Chinese Library Classification", "Logic": 0, "Items": [
+                {"Key": "", "Title": sub_name, "Logic": 1, "Name": "CLC", "Operate": "=", "Value": sub_name, "ExtendType": 1,
+                 "ExtendValue": "中英文对照", "Value2": "", "BlurType": "??"}], "ChildItems": []}]},
+        {"Key": "ControlGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
+            {"Key": ".tit-startend-yearbox", "Title": "", "Logic": 1, "Items": [
+                {"Key": ".tit-startend-yearbox", "Title": "Publication Year", "Logic": 1, "Name": "YE", "Operate": "",
+                 "Value": year, "ExtendType": 2, "ExtendValue": "", "Value2": year, "BlurType": ""}],
+             "ChildItems": []}]},
+        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
+            {"Key": "2", "Title": "", "Logic": 1, "Items": [
+                {"Key": "F086?", "Title": "Music and Dancing", "Logic": 2, "Name": "专题子栏目代码", "Operate": "",
+                 "Value": "F086?", "ExtendType": 14, "ExtendValue": "", "Value2": "", "BlurType": ""}],
+             "ChildItems": []}]}]}, "CodeLang": ""}
 
     return QueryJson
 
@@ -102,28 +96,28 @@ def queryParse(query: str):
     return formData
 
 
-async def retry_func(request):
-    if request.url == 'https://oversea.cnki.net/kns/Brief/GetGridTableHtml':
-
-        time.sleep(3)
-        meta = request.meta
-        headers = request.headers
-        QueryJson = generate_muti_group("CFLQ", meta['sub_name'], meta['year'])
-        data = generate_search_param(QueryJson, "CFLQ", page=1)
-        response = requests.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
-                                    headers=headers)
-        # async with aiohttp.ClientSession() as session:
-        #     async with session.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
-        #                             headers=headers
-        #                             ) as response:
-        res = etree.HTML(response.text)
-        first_hid = res.xpath('//*[@id="HandlerIdHid"]/@value')[0]
-        print(f'第{meta["page"]}更新hid', first_hid)
-        request.data['HandlerId'] = first_hid
-        request.request_config['TIMEOUT'] = 10
-        return request
-    else:
-        return request
+# async def retry_func(request):
+#     if request.url == 'https://oversea.cnki.net/kns/Brief/GetGridTableHtml':
+#
+#         time.sleep(3)
+#         meta = request.meta
+#         headers = request.headers
+#         QueryJson = generate_muti_group("CFLQ", meta['sub_name'], meta['year'])
+#         data = generate_search_param(QueryJson, "CFLQ", page=1)
+#         response = requests.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
+#                                     headers=headers)
+#         # async with aiohttp.ClientSession() as session:
+#         #     async with session.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
+#         #                             headers=headers
+#         #                             ) as response:
+#         res = etree.HTML(response.text)
+#         first_hid = res.xpath('//*[@id="HandlerIdHid"]/@value')[0]
+#         print(f'第{meta["page"]}更新hid', first_hid)
+#         request.data['HandlerId'] = first_hid
+#         request.request_config['TIMEOUT'] = 10
+#         return request
+#     else:
+#         return request
 
 
 class RetryDemo(Spider):
@@ -147,7 +141,7 @@ class RetryDemo(Spider):
     }
 
     async def start_requests(self):
-        title_name = "J8 戏剧艺术"
+        title_name = "J6 音乐"
         sub_name = title_name.split(' ')[0]
 
         QueryJson = {"Platform": "", "DBCode": 'CFLQ', "KuaKuCode": "", "QNode": {"QGroup": [
@@ -176,7 +170,7 @@ class RetryDemo(Spider):
         res = response.html_etree(html=await response.text())
         years = res.xpath('//div[@class="resultlist"]/ul/li/a/@title')
         print(years)
-        for year in years[8:9]:
+        for year in years[1:2]:
             sub_name = meta["title_name"].split(' ')[0]
             QueryJson = generate_muti_group("CFLQ", sub_name, year)
             data = generate_search_param(QueryJson, "CFLQ", page=1)
@@ -300,7 +294,8 @@ class RetryDemo(Spider):
         journal_name = [i.replace('\n', '').replace(' ', '') for i in journal_name]
         journal_name = ';'.join(journal_name)
 
-        data_list = item.CsvItem(data_storage=r'E:\维普\中图分类号_file', filename=f'{meta["title_name"]}')
+        data_list = item.CsvItem(data_storage=fr'E:\维普\中图分类号_file\{meta["title_name"]}',
+                                 filename=f'{meta["title_name"]}')
         data_list.append(
             dict(title_name=title_name, author=author, abstract=abstract, keywords=keywords, fund=fund, doi=doi,
                  series=series, subject=subject, clc=clc, journal_name=journal_name))

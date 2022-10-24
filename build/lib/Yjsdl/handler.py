@@ -66,7 +66,11 @@ class DownloadHandler:
             return await self._retry(request, error_msg=e)
 
     async def _make_request(self, request):
-        """Make a request by using aiohttp"""
+        """
+        request
+        :param request:
+        :return:
+        """
         self.logger.info(f"<{request.method}: {request.url}>")
         aiohttp_kwargs = {}
         aiohttp_kwargs.setdefault('headers', request.headers)
@@ -75,6 +79,7 @@ class DownloadHandler:
         aiohttp_kwargs.setdefault('ssl', request.ssl)
         aiohttp_kwargs.setdefault('timeout',
                                   aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
+        aiohttp_kwargs.update(request.aiohttp_kwargs)
 
         async with aiohttp.ClientSession(cookies=request.cookie, connector=aiohttp.TCPConnector(ssl=False),
                                          trust_env=True) as session:
@@ -83,7 +88,12 @@ class DownloadHandler:
         return content, request_func
 
     async def _retry(self, request, error_msg):
-        """Manage request"""
+        """
+        retry
+        :param request:
+        :param error_msg:
+        :return:
+        """
         if request.retry_times > 0:
             # Sleep to give server a chance to process/cache prior request
             if request.request_config.get("RETRY_DELAY", 0) > 0:
