@@ -67,11 +67,19 @@ def generate_muti_group(en_id, sub_name, year):
                 {"Key": ".tit-startend-yearbox", "Title": "Publication Year", "Logic": 1, "Name": "YE", "Operate": "",
                  "Value": year, "ExtendType": 2, "ExtendValue": "", "Value2": year, "BlurType": ""}],
              "ChildItems": []}]},
-        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
-            {"Key": "2", "Title": "", "Logic": 1, "Items": [
-                {"Key": "F086?", "Title": "Music and Dancing", "Logic": 2, "Name": "专题子栏目代码", "Operate": "",
-                 "Value": "F086?", "ExtendType": 14, "ExtendValue": "", "Value2": "", "BlurType": ""}],
-             "ChildItems": []}]}]}, "CodeLang": ""}
+        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [{"Key": "2", "Title": "", "Logic": 1,
+                                                                                   "Items": [{"Key": "H123?",
+                                                                                              "Title": "Sociology and Statistics",
+                                                                                              "Logic": 2,
+                                                                                              "Name": "专题子栏目代码",
+                                                                                              "Operate": "",
+                                                                                              "Value": "H123?",
+                                                                                              "ExtendType": 14,
+                                                                                              "ExtendValue": "",
+                                                                                              "Value2": "",
+                                                                                              "BlurType": ""}],
+                                                                                   "ChildItems": []}]}]},
+                 "CodeLang": ""}
 
     return QueryJson
 
@@ -79,22 +87,24 @@ def generate_muti_group(en_id, sub_name, year):
 @middleware.request
 async def get_FirstHid(spider_ins, request):
     meta = request.meta
-    if request.url == 'https://oversea.cnki.net/kns/Brief/GetGridTableHtml' and meta.get('page'):
+    page = meta.get('page')
+    if page in [15, 30, 60, 70, 80, 90, 100, 110, 120]:
+        if request.url == 'https://oversea.cnki.net/kns/Brief/GetGridTableHtml' and meta.get('page'):
 
-        headers = request.headers
-        QueryJson = generate_muti_group("CFLQ", meta['sub_name'], meta['year'])
-        data = generate_search_param(QueryJson, "CFLQ", page=1)
-        # response = requests.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
-        #                             headers=headers)
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
-                                    headers=headers
-                                    ) as response:
-                res = etree.HTML(await response.text())
-                first_hid = res.xpath('//*[@id="HandlerIdHid"]/@value')[0]
-                print(f'第{meta["page"]}更新hid', first_hid)
-                request.data['HandlerId'] = first_hid
-                request.request_config['TIMEOUT'] = 10
-                return request
-    else:
-        return request
+            headers = request.headers
+            QueryJson = generate_muti_group("CFLQ", meta['sub_name'], meta['year'])
+            data = generate_search_param(QueryJson, "CFLQ", page=1)
+            # response = requests.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
+            #                             headers=headers)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url='https://oversea.cnki.net/kns/Brief/GetGridTableHtml', data=data,
+                                        headers=headers
+                                        ) as response:
+                    res = etree.HTML(await response.text())
+                    first_hid = res.xpath('//*[@id="HandlerIdHid"]/@value')[0]
+                    print(f'第{meta["page"]}更新hid', first_hid)
+                    request.data['HandlerId'] = first_hid
+                    request.request_config['TIMEOUT'] = 10
+                    return request
+        else:
+            return request

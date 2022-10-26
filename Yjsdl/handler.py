@@ -5,7 +5,6 @@
 import asyncio
 import aiohttp
 from inspect import iscoroutinefunction
-from aiohttp_socks import ProxyConnector
 from Yjsdl.utils import get_logger
 from Yjsdl import Request, Response
 

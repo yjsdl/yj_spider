@@ -57,7 +57,7 @@ setup(
     long_description_content_type="text/markdown",
     author_email="yj160521@163.com",
     python_requires=">=3.6",
-    install_requires=["aiohttp>=3.5.4", "lxml", 'aiofiles', 'aiocsv'],
+    install_requires=["aiohttp>=3.5.4", "lxml", 'aiofiles', 'aiocsv', 'pandas'],
     packages=packages,
     package_data={
         "tmpl": ["./*.tmpl"],

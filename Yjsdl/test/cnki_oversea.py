@@ -67,18 +67,27 @@ def generate_muti_group(en_id, sub_name, year):
     QueryJson = {"Platform": "", "DBCode": en_id, "KuaKuCode": "", "QNode": {"QGroup": [
         {"Key": "Subject", "Title": "", "Logic": 4, "Items": [], "ChildItems": [
             {"Key": "input[data-tipid=gradetxt-1]", "Title": "Chinese Library Classification", "Logic": 0, "Items": [
-                {"Key": "", "Title": sub_name, "Logic": 1, "Name": "CLC", "Operate": "=", "Value": sub_name, "ExtendType": 1,
+                {"Key": "", "Title": sub_name, "Logic": 1, "Name": "CLC", "Operate": "=", "Value": sub_name,
+                 "ExtendType": 1,
                  "ExtendValue": "中英文对照", "Value2": "", "BlurType": "??"}], "ChildItems": []}]},
         {"Key": "ControlGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
             {"Key": ".tit-startend-yearbox", "Title": "", "Logic": 1, "Items": [
                 {"Key": ".tit-startend-yearbox", "Title": "Publication Year", "Logic": 1, "Name": "YE", "Operate": "",
                  "Value": year, "ExtendType": 2, "ExtendValue": "", "Value2": year, "BlurType": ""}],
              "ChildItems": []}]},
-        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [
-            {"Key": "2", "Title": "", "Logic": 1, "Items": [
-                {"Key": "F086?", "Title": "Music and Dancing", "Logic": 2, "Name": "专题子栏目代码", "Operate": "",
-                 "Value": "F086?", "ExtendType": 14, "ExtendValue": "", "Value2": "", "BlurType": ""}],
-             "ChildItems": []}]}]}, "CodeLang": ""}
+        {"Key": "MutiGroup", "Title": "", "Logic": 1, "Items": [], "ChildItems": [{"Key": "2", "Title": "", "Logic": 1,
+                                                                                   "Items": [{"Key": "H123?",
+                                                                                              "Title": "Sociology and Statistics",
+                                                                                              "Logic": 2,
+                                                                                              "Name": "专题子栏目代码",
+                                                                                              "Operate": "",
+                                                                                              "Value": "H123?",
+                                                                                              "ExtendType": 14,
+                                                                                              "ExtendValue": "",
+                                                                                              "Value2": "",
+                                                                                              "BlurType": ""}],
+                                                                                   "ChildItems": []}]}]},
+                 "CodeLang": ""}
 
     return QueryJson
 
@@ -131,7 +140,7 @@ class RetryDemo(Spider):
     url = 'https://oversea.cnki.net/kns/Brief/GetGridTableHtml'
     year_url = 'https://oversea.cnki.net/kns/Group/SingleResult'
 
-    concurrency = 4
+    concurrency = 1
     # aiohttp_kwargs = {'proxy': 'https://127.0.0.1:1080'}
 
     headers = {
@@ -141,7 +150,7 @@ class RetryDemo(Spider):
     }
 
     async def start_requests(self):
-        title_name = "J6 音乐"
+        title_name = "C8 统计学"
         sub_name = title_name.split(' ')[0]
 
         QueryJson = {"Platform": "", "DBCode": 'CFLQ', "KuaKuCode": "", "QNode": {"QGroup": [
@@ -171,7 +180,7 @@ class RetryDemo(Spider):
         res = response.html_etree(html=await response.text())
         years = res.xpath('//div[@class="resultlist"]/ul/li/a/@title')
         print(years)
-        for year in years[1:2]:
+        for year in years[3:4]:
             sub_name = meta["title_name"].split(' ')[0]
             QueryJson = generate_muti_group("CFLQ", sub_name, year)
             data = generate_search_param(QueryJson, "CFLQ", page=1)
@@ -249,7 +258,7 @@ class RetryDemo(Spider):
             if page_count > 120:
                 page_count = 120
             meta['max_page'] = page_count
-            self.logger.info(f'当前{meta["title_name"]}的{meta["year"]}的数量为{total_prm}')
+            self.logger.info(f'当前{meta["title_name"]}的{meta["year"]}的数量为{total_prm}, 共有{page_count}页')
 
             for page in range(2, page_count + 1):
                 QueryJson = generate_muti_group("CFLQ", meta['sub_name'], meta['year'])
