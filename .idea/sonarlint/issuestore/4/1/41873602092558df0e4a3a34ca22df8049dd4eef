@@ -1,6 +1,6 @@
 
-Dpython:S1481"%Remove the unused local variable "i".(ûÀ‹8‡óŸİ¿0
-=python:S125"Remove this commented out code.(Çß’Ë8şö€İ¿0
-=python:S125"Remove this commented out code.(Ïêá’8ğ§ÿÜ¿0
-Bpython:S125"Remove this commented out code.(´‚ıÕøÿÿÿÿ8ğ§ÿÜ¿0
-Bpython:S125!"Remove this commented out code.(íˆìÖúÿÿÿÿ8ùšÔİ¿0
+;python:S125"Remove this commented out code.(Ïêá’8×³„ş¿0
+@python:S125"Remove this commented out code.(íˆìÖúÿÿÿÿ8×³„ş¿0
+Gpython:S1481"%Remove the unused local variable "i".(Ä–ï´şÿÿÿÿ8×³„ş¿0
+@python:S125"Remove this commented out code.(öùÏ¾ÿÿÿÿÿ8ˆ¶—À0
+@python:S125"Remove this commented out code.(´‚ıÕøÿÿÿÿ8×³„ş¿0
