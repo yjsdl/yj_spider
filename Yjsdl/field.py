@@ -25,9 +25,6 @@ class BaseField(object):
         """
         self.default = default
 
-    def extract(self, *args, **kwargs):
-        raise NotImplementedError("Extract is not implemented.")
-
 
 class CsvFile:
 

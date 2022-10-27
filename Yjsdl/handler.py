@@ -5,7 +5,6 @@
 import asyncio
 import aiohttp
 from inspect import iscoroutinefunction
-from aiohttp_socks import ProxyConnector
 from Yjsdl.utils import get_logger
 from Yjsdl import Request, Response
 
@@ -80,11 +79,6 @@ class DownloadHandler:
                                   aiohttp.ClientTimeout(total=request.request_config.get('TIMEOUT', 10)))
 
         aiohttp_kwargs.update(request.aiohttp_kwargs)
-        # 使用https代理
-        # connector = ProxyConnector.from_url('socks5://127.0.0.1:1080')
-        #
-        # async with aiohttp.ClientSession(cookies=request.cookie, connector=connector,
-        #                                  trust_env=True) as session:
 
         async with aiohttp.ClientSession(cookies=request.cookie, connector=aiohttp.TCPConnector(ssl=False),
                                          trust_env=True) as session:

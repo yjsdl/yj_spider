@@ -1,1 +1,1 @@
-recursive-include xxxx/templates *.tmpl
+recursive-include Yjsdl/templates *.tmpl

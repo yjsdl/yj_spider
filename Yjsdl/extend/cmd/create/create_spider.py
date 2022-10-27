@@ -8,6 +8,7 @@ from .create_init import CreateInit
 def get_current_date(date_format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.now().strftime(date_format)
 
+
 def deal_file_info(file):
     file = file.replace("{DATE}", get_current_date(date_format="%Y/%m/%d %H:%M"))
     file = file.replace("{USER}", getpass.getuser())
@@ -55,7 +56,7 @@ class CreateSpider:
         file_name = self.cover_to_underline(spider_name)
         if spider_name.islower():
             spider_name = self.underline2hump(spider_name)
-            spider_name = spider_name[:1].upper()+spider_name[1:]  # 驼峰 testSpider -> TestSpider
+            spider_name = spider_name[:1].upper() + spider_name[1:]  # 驼峰 testSpider -> TestSpider
         template = template.replace('${file_name}', file_name)
         spider_template = template.replace('${spider_name}', spider_name)
         spider_template = deal_file_info(spider_template)

@@ -30,7 +30,7 @@ def main():
         try:
             spider_type = int(spider_type)
         except:
-            raise ValueError("spider_type error, support 1, 2, 3")
+            raise ValueError("spider_type error, support 1, 2")
         CreateSpider().create(spider_name, spider_type)
     elif args.project:
         CreateProject().create(args.project)

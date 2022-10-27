@@ -8,7 +8,6 @@ def get_current_date(date_format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.now().strftime(date_format)
 
 
-
 def deal_file_info(file):
     file = file.replace("{DATE}", get_current_date(date_format="%Y/%m/%d %H:%M"))
     file = file.replace("{USER}", getpass.getuser())
