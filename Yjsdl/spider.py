@@ -187,7 +187,7 @@ class Spider(SpiderHook):
         else:
             self.middleware = middleware or Middleware()
 
-        self.request_queue = asyncio.PriorityQueue()
+        self.request_queue = asyncio.Queue()
 
     async def _process_async_callback(
             self, callback_result, response: Response = None
