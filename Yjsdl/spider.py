@@ -187,7 +187,7 @@ class Spider(SpiderHook):
         else:
             self.middleware = middleware or Middleware()
 
-        self.request_queue = asyncio.Queue()
+        self.request_queue = asyncio.PriorityQueue()
 
     async def _process_async_callback(
             self, callback_result, response: Response = None
@@ -446,6 +446,7 @@ class Spider(SpiderHook):
             cookies: dict = None,
             callback=None,
             encoding: typing.Optional[str] = None,
+            priority: typing.Optional[int] = 1,
             headers: dict = None,
             meta: dict = None,
             request_config: dict = None,
@@ -453,6 +454,7 @@ class Spider(SpiderHook):
     ):
         """
         Init a Request class for crawling html
+        :param priority:
         :param cookies:
         :param data:
         :param params:
@@ -471,8 +473,8 @@ class Spider(SpiderHook):
         callback = callback or self.parse
         request_config = request_config or {}
 
-        request_config.update(self.request_config.copy())
-        aiohttp_kwargs.update(self.aiohttp_kwargs.copy())
+        self.request_config.update(request_config.copy())
+        self.aiohttp_kwargs.update(aiohttp_kwargs.copy())
 
         return Request(
             url=url,
@@ -484,8 +486,9 @@ class Spider(SpiderHook):
             encoding=encoding,
             headers=headers,
             meta=meta,
-            request_config=request_config,
-            **aiohttp_kwargs,
+            request_config=self.request_config,
+            priority=priority,
+            **self.aiohttp_kwargs,
         )
 
     async def start_master(self):
@@ -515,7 +518,7 @@ class Spider(SpiderHook):
                 continue
 
             await semaphore.acquire()
-            await asyncio.sleep(self.request_config.get('DELAY', 0))
+            # await asyncio.sleep(self.request_config.get('DELAY', 0))
             # 执行请求
             self.loop.create_task(
                 self.handle_request(request_item, semaphore)
