@@ -28,15 +28,11 @@ class DownloadHandler:
 
         try:
             content, resp = await self._make_request(request)
-            try:
-                resp_encoding = resp.get_encoding()
-            except:
-                resp_encoding = request.encoding
 
             response = Response(
                 url=str(resp.url),
                 method=resp.method,
-                encoding=resp_encoding,
+                encoding=resp.get_encoding(),
                 meta=request.meta,
                 cookies=resp.cookies,
                 history=resp.history,

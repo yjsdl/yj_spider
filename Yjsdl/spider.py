@@ -173,7 +173,6 @@ class Spider(SpiderHook):
 
         self.aiohttp_kwargs = self.aiohttp_kwargs or {}
         self.spider_kwargs = spider_kwargs
-        self.request_config = self.request_config or {}
 
         self.cancel_tasks = cancel_tasks
         self.is_async_start = is_async_start
