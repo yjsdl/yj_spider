@@ -3,12 +3,12 @@
 # @Author  : {USER}
 # @File    : ${file_name}.py
 
-from Yjsdl import Spider
+from Yjsdl import Spider, item
 
 
 class ${spider_name}(Spider):
     request_config = {
-        "RETRIES": 3,
+        "RETRIES": 2,
         "DELAY": 0,
         "TIMEOUT": 20
     }
