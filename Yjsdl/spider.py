@@ -12,6 +12,7 @@ from datetime import datetime
 from functools import reduce
 from inspect import isawaitable
 from signal import SIGINT, SIGTERM
+from copy import deepcopy
 from typing import AsyncGenerator, Generator, Coroutine
 
 from Yjsdl.exceptions import (
@@ -362,12 +363,8 @@ class Spider(SpiderHook):
         loop = loop or asyncio.new_event_loop()
         spider_ins = cls(middleware=middleware, loop=loop, **spider_kwargs)
 
-        str1 = spider_ins._start(after_start=after_start, before_stop=before_stop)
-        spider_ins.loop.run_until_complete(str1)
-        # Actually start crawling
-        # spider_ins.loop.run_until_complete(
-        #     spider_ins._start(after_start=after_start, before_stop=before_stop)
-        # )
+        spider_ins.loop.run_until_complete(
+            spider_ins._start(after_start=after_start, before_stop=before_stop))
 
         spider_ins.loop.run_until_complete(spider_ins.loop.shutdown_asyncgens())
         if close_event_loop:
@@ -472,8 +469,11 @@ class Spider(SpiderHook):
         callback = callback or self.parse
         request_config = request_config or {}
 
-        self.request_config.update(request_config.copy())
-        self.aiohttp_kwargs.update(aiohttp_kwargs.copy())
+        _request_config = deepcopy(self.request_config)
+        _request_config.update(request_config)
+
+        _aiohttp_kwargs = deepcopy(self.aiohttp_kwargs)
+        _aiohttp_kwargs.update(aiohttp_kwargs.copy())
 
         return Request(
             url=url,
@@ -485,9 +485,9 @@ class Spider(SpiderHook):
             encoding=encoding,
             headers=headers,
             meta=meta,
-            request_config=self.request_config,
+            request_config=_request_config,
             priority=priority,
-            **self.aiohttp_kwargs,
+            **_aiohttp_kwargs,
         )
 
     async def start_master(self):
